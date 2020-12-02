@@ -13,8 +13,14 @@ repositories {
 }
 
 dependencies {
+	// Basics
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// Healthcheck
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// Database with ORM (Java Persistence API).
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.postgresql:postgresql:42.2.1'
+	// Tests
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
@@ -22,6 +28,8 @@ test {
 	useJUnitPlatform()
 }
 
+
+// Only use lowercase on docker image name
 tasks.named("bootBuildImage") {
 	imageName = "${rootProject.name.toLowerCase()}:${version}"
 }
