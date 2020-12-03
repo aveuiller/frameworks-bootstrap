@@ -1,5 +1,6 @@
 package io.github.aveuiller.experiment.delivery;
 
+import io.github.aveuiller.experiment.ApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,29 +34,30 @@ public class DeliveryController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public ResponseEntity<Delivery> post(@RequestBody Delivery delivery) {
+    public ResponseEntity<Delivery> post(@RequestBody Delivery delivery) throws ApiException {
         try {
             delivery = deliveryService.create(delivery);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            // TODO: We may want a Map constructor to build a complete error json.
+            throw new ApiException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return new ResponseEntity<>(delivery, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Delivery> get(@PathVariable long id) {
+    public ResponseEntity<Delivery> get(@PathVariable long id) throws ApiException {
         Optional<Delivery> delivery = deliveryService.findOne(id);
         if (delivery.isEmpty()) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            throw new ApiException(HttpStatus.NOT_FOUND, String.format("Delivery %d not found", id));
         }
         return new ResponseEntity<>(delivery.get(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Delivery> delete(@PathVariable long id) {
+    public ResponseEntity<Delivery> delete(@PathVariable long id) throws ApiException {
         Optional<Delivery> delivery = deliveryService.delete(id);
         if (delivery.isEmpty()) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            throw new ApiException(HttpStatus.NOT_FOUND, String.format("Delivery %d not found", id));
         }
         return new ResponseEntity<>(delivery.get(), HttpStatus.OK);
     }

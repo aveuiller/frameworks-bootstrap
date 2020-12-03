@@ -21,11 +21,10 @@ public class HelloWorldController {
         output.put("Hello", "World");
         return new ResponseEntity<>(output, HttpStatus.OK);
     }
+
     @RequestMapping("/hellol")
-    public ResponseEntity<Map<String, String>> indexWithError() {
+    public ResponseEntity<Map<String, String>> indexWithError() throws ApiException {
         logger.warn("Someone requested an error!");
-        Map<String, String> error = new HashMap<>();
-        error.put("message", "you asked for it");
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        throw new ApiException(HttpStatus.BAD_REQUEST, "you asked for it");
     }
 }

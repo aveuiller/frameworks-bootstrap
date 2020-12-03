@@ -3,6 +3,7 @@ package io.github.aveuiller.experiment.delivery;
 import io.github.aveuiller.experiment.delivery.thirdparty.AvailableThirdParty;
 import org.hibernate.annotations.CreationTimestamp;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,9 +17,13 @@ public class Delivery {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     long id;
+    @Column(nullable = false)
     String state;
+    @Column(nullable = false)
     String externalId;
+    @Column(nullable = false)
     String location;
+    @Column(nullable = false)
     String thirdParty;
 
     // TODO: Watch out, this date is not persisted as UTC.
