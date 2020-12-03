@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -20,8 +21,9 @@ class HelloWorldControllerTest {
 
     @Test
     public void getHello() throws Exception {
-        mvc.perform(MockMvcRequestBuilders.get("/hello").accept(MediaType.APPLICATION_JSON))
+        MockHttpServletRequestBuilder accept = MockMvcRequestBuilders.get("/hello").accept(MediaType.APPLICATION_JSON);
+        mvc.perform(accept)
                 .andExpect(status().isOk())
-                .andExpect(content().string(equalTo("{\"Hello\":\"World\"}")));
+                .andExpect(content().json("{\"Hello\":\"World\"}"));
     }
 }

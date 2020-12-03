@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -34,7 +35,7 @@ public class DeliveryController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public ResponseEntity<Delivery> post(@RequestBody Delivery delivery) throws ApiException {
+    public ResponseEntity<Delivery> post(@Valid @RequestBody Delivery delivery) throws ApiException {
         try {
             delivery = deliveryService.create(delivery);
         } catch (Exception e) {

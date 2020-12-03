@@ -5,10 +5,13 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
@@ -17,14 +20,24 @@ public class Delivery {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     long id;
+
     @Column(nullable = false)
-    String state;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    DeliveryState state;
+
     @Column(nullable = false)
+    @NotNull
     String externalId;
+
     @Column(nullable = false)
+    @NotNull
     String location;
+
     @Column(nullable = false)
-    String thirdParty;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    AvailableThirdParty thirdParty;
 
     // TODO: Watch out, this date is not persisted as UTC.
     @CreationTimestamp
@@ -34,24 +47,23 @@ public class Delivery {
 
     }
 
+    public Delivery(@NotNull DeliveryState state, @NotNull String externalId, @NotNull String location, @NotNull AvailableThirdParty thirdParty) {
+        this.state = state;
+        this.externalId = externalId;
+        this.location = location;
+        this.thirdParty = thirdParty;
+    }
+
     public long getId() {
         return id;
     }
 
-    public void setState(DeliveryState state) {
-        this.state = state.name();
-    }
-
     public DeliveryState getState() {
-        return DeliveryState.valueOf(this.state);
+        return state;
     }
 
-    public AvailableThirdParty getThirdParty() {
-        return AvailableThirdParty.valueOf(thirdParty);
-    }
-
-    public void setThirdParty(AvailableThirdParty thirdParty) {
-        this.thirdParty = thirdParty.name();
+    public void setState(DeliveryState state) {
+        this.state = state;
     }
 
     public String getExternalId() {
@@ -68,6 +80,14 @@ public class Delivery {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public AvailableThirdParty getThirdParty() {
+        return thirdParty;
+    }
+
+    public void setThirdParty(AvailableThirdParty thirdParty) {
+        this.thirdParty = thirdParty;
     }
 
     public Date getCreatedAt() {
