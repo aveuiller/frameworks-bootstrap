@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,10 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/delivery", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/delivery",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
 public class DeliveryController {
 
     private final DeliveryService deliveryService;
@@ -29,9 +34,9 @@ public class DeliveryController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public ResponseEntity<Page<Delivery>> index(@RequestParam(required = false, defaultValue = "0") int page) {
+    public ResponseEntity<List<Delivery>> index(@RequestParam(required = false, defaultValue = "0") int page) {
         Pageable pageable = PageRequest.of(page, 50);
-        return new ResponseEntity<>(deliveryService.findAll(pageable), HttpStatus.OK);
+        return new ResponseEntity<>(Collections.singletonList(new Delivery()), HttpStatus.OK);
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
