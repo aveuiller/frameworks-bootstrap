@@ -21,6 +21,7 @@ dependencies {
 	// Database with ORM (Java Persistence API).
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.postgresql:postgresql:42.2.1'
+	implementation 'com.h2database:h2:1.4.200'
 	// Tests
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

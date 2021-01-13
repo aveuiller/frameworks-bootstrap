@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -34,9 +32,9 @@ public class DeliveryController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.GET)
-    public ResponseEntity<List<Delivery>> index(@RequestParam(required = false, defaultValue = "0") int page) {
+    public ResponseEntity<Page<Delivery>> index(@RequestParam(required = false, defaultValue = "0") int page) {
         Pageable pageable = PageRequest.of(page, 50);
-        return new ResponseEntity<>(Collections.singletonList(new Delivery()), HttpStatus.OK);
+        return new ResponseEntity<>(deliveryService.findAll(pageable), HttpStatus.OK);
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
