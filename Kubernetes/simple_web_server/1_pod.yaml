@@ -1,0 +1,30 @@
+# You usually don't want to manage Pods directly, you may want to use the 1_deployment.yaml configuration file.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-web-server
+spec:
+  # <containers> is a list of container definition to embed in the pod
+  containers:
+    - name: web
+      # <image> is the container runtime image to instantiate as a container
+      image: nginx
+      # <ports> defines the ports to open on the container
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP
+      # <env> defines the environment variables to load on the container
+      env:
+        - name: SOME_CONFIG
+          # Create a line "value: <config_entry>" from the ConfigMap data
+          valueFrom:
+            configMapKeyRef:
+              name: simple-web-config
+              key: configuration_key
+        - name: SOME_SECRET
+          # Create a line "value: <config_entry>" from the Secret data
+          valueFrom:
+            secretKeyRef:
+              name: simple-web-secrets
+              key: secret_configuration_key

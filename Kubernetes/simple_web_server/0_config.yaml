@@ -1,0 +1,29 @@
+apiVersion: v1
+# Defines the resource described in this file
+kind: Secret
+# Narrows down selection and identify the resource
+metadata:
+  name: simple-web-secrets
+  namespace: default
+type: opaque
+# Configures data to load
+data:
+  # Secrets are encoded to base64
+  secret_configuration_key: "c2VjcmV0IHZhbHVl"
+---
+
+apiVersion: v1
+# Defines the resource described in this file
+kind: ConfigMap
+# Narrows down selection and identify the resource
+metadata:
+  name: simple-web-config
+  namespace: default
+# Configures data to load
+data:
+  configuration_key: "Configuration value"
+  multiline_configuration: |
+    # Any multiline content is accepted
+    some_property=true
+    another_property=false
+  https_port: "8443"

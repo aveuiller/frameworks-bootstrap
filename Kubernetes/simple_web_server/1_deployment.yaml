@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-web-server-deployment
+  namespace: default
+  labels:
+    app: webserver
+spec:
+  # <selector> should retrieve the Pod defined below, and possibly more
+  selector:
+    matchLabels:
+      app: webserver
+      instance: nginx-ws-deployment
+  # <replicas> asks for 3 pods running in parallel at all time
+  replicas: 3
+  # The content of <template> is a Pod definition file, without <apiVersion> nor <kind>
+  template:
+    metadata:
+      name: my-web-server
+      namespace: default
+      labels:
+        app: webserver
+        instance: nginx-ws-deployment
+    spec:
+      containers:
+        - name: web
+          image: nginx
+          ports:
+            - name: web
+              containerPort: 80
+              protocol: TCP
+            - name: web-secure
+              containerPort: 443
+              protocol: TCP
+          env:
+            - name: SOME_CONFIG
+              # Create a line "value: <config_entry>" from the ConfigMap data
+              valueFrom:
+                configMapKeyRef:
+                  name: simple-web-config
+                  key: configuration_key
+            - name: SOME_SECRET
+              # Create a line "value: <config_entry>" from the Secret data
+              valueFrom:
+                secretKeyRef:
+                  name: simple-web-secrets
+                  key: secret_configuration_key

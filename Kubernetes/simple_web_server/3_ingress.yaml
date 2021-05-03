@@ -1,0 +1,30 @@
+# Depends on 2_service_clusterip.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: simple-web-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    # Using <host> redirects all request matching the given DNS name to this rule
+    - host: "*.minikube.internal"
+      http:
+        paths:
+          - path: /welcome
+            pathType: Prefix
+            backend:
+              service:
+                name: simple-web-service-clusterip
+                port:
+                  number: 80
+    # All other requests will be redirected through this rule
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: simple-web-service-clusterip
+                port:
+                  number: 80
