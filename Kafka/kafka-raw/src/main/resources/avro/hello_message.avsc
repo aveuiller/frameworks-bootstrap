@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "AvroHelloMessage",
+  "namespace": "io.github.aveuiller.learning.kafka.raw.generated",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "long"
+    },
+    {
+      "name": "message",
+      "type": "string"
+    },
+    {
+      "name": "value",
+      "type": "float"
+    },
+    {
+      "name": "version",
+      "type": "int"
+    }
+  ]
+}

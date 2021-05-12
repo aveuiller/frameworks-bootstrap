@@ -1,0 +1,67 @@
+# Docker compose running Kafka ecosystem.
+# - zookeeper: manages the broker cluster (will be removed soon in Kafka arch.)
+# - kafka: broker itself.
+# - ksql: consumer database built on top of kafka by confluent
+# - schema_registry: Avro schema references for topics.
+#
+# See https://docs.confluent.io/platform/current/installation/docker/config-reference.html
+# and https://github.com/confluentinc/cp-docker-images/
+version: "2"
+
+networks:
+  net_kafka_zk:
+  net_kafka_clients:
+  net_kafka_registry:
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    networks:
+      - net_kafka_zk
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+
+  kafka:
+    image: confluentinc/cp-kafka
+    networks:
+      - net_kafka_zk
+      - net_kafka_clients
+      - net_kafka_registry
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:32181"
+      # Advertise for both Docker network through "kafka"
+      # And the host through "localhost"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092"
+      KAFKA_BROKER_ID: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    ports:
+      - "29092:29092"
+
+  ksql:
+    image: confluentinc/cp-ksqldb-server
+    networks:
+      - net_kafka_clients
+      - net_kafka_registry
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_KSQL_SERVICE_ID: "ksql_docker"
+      KSQL_SCHEMA_REGISTRY_URL: "http://schema_registry:8081"
+    ports:
+      - "8088:8088"
+
+  schema_registry:
+    image: confluentinc/cp-schema-registry
+    networks:
+      - net_kafka_registry
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:9092"
+      SCHEMA_REGISTRY_HOST_NAME: "schema_registry"
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+    ports:
+      - "8081:8081"
