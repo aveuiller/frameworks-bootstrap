@@ -1,0 +1,183 @@
+version: "v2"
+
+networks:
+  net_mongo_adm:
+  net_kafka_zk:
+  net_kafka_sink:
+  net_kafka_source:
+  net_kafka_registry:
+
+services:
+  # Kafka Cluster
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    networks:
+      - net_kafka_zk
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+
+  kafka:
+    image: confluentinc/cp-kafka
+    networks:
+      - net_kafka_zk
+      - net_kafka_sink
+      - net_kafka_source
+      - net_kafka_registry
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:32181"
+      # Advertise for both Docker network through "kafka"
+      # And the host through "localhost"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:39092"
+      KAFKA_BROKER_ID: 0
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    ports:
+      - "39092:39092"
+
+  schema_registry:
+    image: confluentinc/cp-schema-registry
+    networks:
+      - net_kafka_registry
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:9092"
+      SCHEMA_REGISTRY_HOST_NAME: "schema_registry"
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:28081"
+    ports:
+      - "28081:28081"
+
+  # Source Configuration
+  connect-source:
+    build: source
+    networks:
+      - net_kafka_source
+      - net_kafka_registry
+    depends_on:
+      - kafka
+    # Registering the connector on startup
+    command:
+      - bash
+      - -c
+      - |
+        /etc/confluent/docker/run > /tmp/connect.log 2>&1 &
+        export SERVICE_URL="$$CONNECT_REST_ADVERTISED_HOST_NAME:$$CONNECT_REST_PORT"
+        echo "Waiting for Kafka Connect to start listening on $$SERVICE_URL ⏳"
+        while : ; do
+           curl_status=$$(curl -s -o /dev/null -w %{http_code} http://$$SERVICE_URL/connectors)
+           echo -e $$(date) " Kafka Connect listener HTTP state: " $$curl_status " (waiting for 200)"
+           if [ $$curl_status -eq 200 ] ; then
+           break
+           fi
+           sleep 10
+        done
+        echo -e "\n--\n+> Creating Kafka Connect source connectors"
+        curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://$$SERVICE_URL/connectors \
+          -d @/home/appuser/source-conf.json
+        # Give time to the API, we're not in a rush anyway
+        sleep 5
+        echo -e "\n--\n+> Checking connectors status"
+        curl -s "http://$$SERVICE_URL/connectors"| jq '.[]' \
+          | xargs -I{connector_name} curl -s "http://$$SERVICE_URL/connectors/"{connector_name}"/status" \
+          | jq -c -M '[.name,.connector.state,.tasks[].state]|join(":|:")' \
+          | column -s : -t| sed 's/\"//g'| sort
+        sleep infinity
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+      CONNECT_GROUP_ID: "source-mongodb"
+      CONNECT_CONFIG_STORAGE_TOPIC: "source-mongodb-config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "source-mongodb-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "source-mongodb-status"
+      CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema_registry:28081"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema_registry:28081"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect-source"
+      CONNECT_REST_PORT: "28082"
+      # We only have one broker available, can't do more than that.
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+
+  # Sink Configuration.
+  mongo:
+    image: mongo
+    networks:
+      - net_mongo_adm
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+
+  mongo-adm:
+    image: mongo-express
+    networks:
+      - net_mongo_adm
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_SERVER: mongo
+    ports:
+      - "8000:8081"
+
+  connect-sink:
+    build: sink
+    networks:
+      - net_kafka_sink
+      - net_mongo_adm
+      - net_kafka_registry
+    depends_on:
+      - kafka
+      - mongo
+    # Registering the connector on startup
+    # Config Source: https://github.com/mongodb/mongo-kafka/blob/master/config/MongoSinkConnector.properties
+    command:
+      - bash
+      - -c
+      - |
+        /etc/confluent/docker/run > /tmp/connect.log 2>&1 &
+        export SERVICE_URL="$$CONNECT_REST_ADVERTISED_HOST_NAME:$$CONNECT_REST_PORT"
+        echo "Waiting for Kafka Connect to start listening on $SERVICE_URL ⏳"
+        while : ; do
+           curl_status=$$(curl -s -o /dev/null -w %{http_code} http://$$SERVICE_URL/connectors)
+           echo -e $$(date) " Kafka Connect listener HTTP state: " $$curl_status " (waiting for 200)"
+           if [ $$curl_status -eq 200 ] ; then
+           break
+           fi
+           sleep 10
+        done
+        echo -e "\n--\n+> Creating Kafka Connect source connectors"
+        curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://$$SERVICE_URL/connectors \
+          -d @/home/appuser/sink-conf.json
+        # Give time to the API, we're not in a rush anyway
+        sleep 5
+        echo -e "\n--\n+> Checking connectors"
+        curl -s "http://$$SERVICE_URL/connectors"| jq '.[]' \
+          | xargs -I{connector_name} curl -s "http://$$SERVICE_URL/connectors/"{connector_name}"/status" \
+          | jq -c -M '[.name,.connector.state,.tasks[].state]|join(":|:")' \
+          | column -s : -t| sed 's/\"//g'| sort
+        sleep infinity
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+      CONNECT_GROUP_ID: "sink-mongodb"
+      CONNECT_CONFIG_STORAGE_TOPIC: "sink-mongodb-config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "sink-mongodb-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "sink-mongodb-status"
+      CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema_registry:28081"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema_registry:28081"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect-sink"
+      CONNECT_REST_PORT: "38082"
+      # We only have one broker available, can't do more than that.
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      # Secret Management
+      CONNECT_CONFIG_PROVIDERS: "file"
+      CONNECT_CONFIG_PROVIDERS_FILE_CLASS: "org.apache.kafka.common.config.provider.FileConfigProvider"
