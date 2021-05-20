@@ -1,0 +1,3 @@
+input.path=/tmp/source
+finished.path=/tmp/finished
+csv.first.row.as.header=true

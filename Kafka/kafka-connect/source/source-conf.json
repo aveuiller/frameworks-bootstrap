@@ -1,0 +1,16 @@
+{
+  "name": "mongo-source",
+  "config": {
+    "topic": "mongo-source",
+    "tasks.max": "1",
+    "halt.on.error": "false",
+    "connector.class": "com.github.jcustenborder.kafka.connect.spooldir.SpoolDirCsvSourceConnector",
+    "input.path": "/home/appuser/data/source",
+    "finished.path": "/home/appuser/data/finished",
+    "error.path": "/home/appuser/data/error",
+    "input.file.pattern": "^data.*.csv$",
+    "value.schema": "{\"name\":\"com.github.jcustenborder.kafka.connect.model.Value\",\"type\":\"STRUCT\",\"isOptional\":false,\"fieldSchemas\":{\"id\":{\"type\":\"STRING\",\"isOptional\":true},\"name\":{\"type\":\"STRING\",\"isOptional\":true},\"creation_date\":{\"type\":\"STRING\",\"isOptional\":true},\"admin\":{\"type\":\"STRING\",\"isOptional\":true}}}",
+    "key.schema": "{\"name\":\"com.github.jcustenborder.kafka.connect.model.Key\",\"type\":\"STRUCT\",\"isOptional\":false,\"fieldSchemas\":{\"id\":{\"type\":\"STRING\",\"isOptional\":false}}}",
+    "csv.first.row.as.header": "true"
+  }
+}

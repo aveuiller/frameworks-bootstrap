@@ -1,0 +1,21 @@
+{
+  "name": "mongo-sink",
+  "config": {
+    "topics": "mongo-source",
+    "tasks.max": "1",
+    "connector.class": "com.mongodb.kafka.connect.MongoSinkConnector",
+    "connection.uri": "mongodb://${file:/home/appuser/auth.properties:username}:${file:/home/appuser/auth.properties:password}@mongo:27017",
+    "database": "kafka_connect",
+    "collection": "sink",
+    "max.num.retries": "1",
+    "retries.defer.timeout": "5000",
+    "key.projection.type": "none",
+    "key.projection.list": "",
+    "value.projection.type": "none",
+    "value.projection.list": "",
+    "document.id.strategy": "com.mongodb.kafka.connect.sink.processor.id.strategy.BsonOidStrategy",
+    "post.processor.chain": "com.mongodb.kafka.connect.sink.processor.DocumentIdAdder",
+    "delete.on.null.values": "false",
+    "writemodel.strategy": "com.mongodb.kafka.connect.sink.writemodel.strategy.ReplaceOneDefaultStrategy"
+  }
+}
