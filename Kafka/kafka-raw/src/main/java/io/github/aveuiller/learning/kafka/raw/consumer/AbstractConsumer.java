@@ -41,7 +41,7 @@ abstract class AbstractConsumer<T extends Serializable> implements HelloConsumer
         if (useAvro) {
             defaultProperties.put("value.deserializer", "io.confluent.kafka.serializers.KafkaAvroDeserializer");
             defaultProperties.put("schema.registry.url", "http://localhost:8081");
-            // Configure Avro deserializer to convert the received data to a SpecificRecord (i.e. HelloMessage)
+            // Configure Avro deserializer to convert the received data to a SpecificRecord (i.e. AvroHelloMessage)
             // instead of a GenericRecord (i.e. schema + array of deserialized data).
             defaultProperties.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
         } else {

@@ -55,6 +55,20 @@ services:
     ports:
       - "8088:8088"
 
+  ksql_headless:
+    build: ksql
+    networks:
+      - net_kafka_clients
+      - net_kafka_registry
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_KSQL_SERVICE_ID: "ksql_docker_headless"
+      KSQL_SCHEMA_REGISTRY_URL: "http://schema_registry:8081"
+      KSQL_KSQL_QUERIES_FILE: "/home/appuser/ksql-headless.sql"
+    ports:
+      - "28088:8088"
+
   schema_registry:
     image: confluentinc/cp-schema-registry
     networks:

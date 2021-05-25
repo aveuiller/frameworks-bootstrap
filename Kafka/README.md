@@ -19,7 +19,8 @@ The file `docker-compose.yaml` defines a Kafka environment including one instanc
 - Zookeeper
 - Kafka Broker
 - Kafka Schema Registry
-- KSQL DB Server
+- An interactive ksqlDB Server
+- An headless ksqlDB Server (you need to run the project `kafka-raw` to create the json topic it depends on)
 
 Note: The Kafka docker container will advertise his url as `kafka:9092` and `localhost:29092`,
 to enable contact respectively from a docker container and the host.
