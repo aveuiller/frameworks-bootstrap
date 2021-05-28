@@ -2,6 +2,9 @@ plugins {
 	id 'org.springframework.boot' version '2.5.0'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+
+	// Generate Java from GraphQL Schema
+	id "io.github.kobylynskyi.graphql.codegen" version "5.1.0"
 }
 
 group = 'io.github.aveuiller.graphql'
@@ -13,6 +16,12 @@ repositories {
 }
 
 dependencies {
+	implementation 'com.graphql-java:graphql-spring-boot-starter:5.0.2'
+	implementation 'com.graphql-java:graphql-java-tools:5.2.4'
+	// The validation library is required for code generated through the codegen plugin
+	implementation 'org.springframework.boot:spring-boot-starter-validation:2.5.0'
+	implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
 	implementation 'org.springframework.boot:spring-boot-starter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
@@ -20,3 +29,17 @@ dependencies {
 test {
 	useJUnitPlatform()
 }
+
+graphqlCodegen {
+	// all config options:
+	// https://github.com/kobylynskyi/graphql-java-codegen/blob/master/docs/codegen-options.md
+	graphqlSchemas.includePattern = ".*\\.graphqls"
+	outputDir = new File("$buildDir/generated")
+	packageName = "io.github.aveuiller.graphql.springbootintegration.models"
+}
+
+// Automatically generate GraphQL code on project build:
+compileJava.dependsOn 'graphqlCodegen'
+
+// Add generated sources to your project source sets:
+sourceSets.main.java.srcDir "$buildDir/generated"

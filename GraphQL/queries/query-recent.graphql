@@ -1,0 +1,9 @@
+query fetchRecent($count: Int = 10) {
+    recentPosts(count: $count) {
+        id
+        title
+        author {
+            name
+        }
+    }
+}

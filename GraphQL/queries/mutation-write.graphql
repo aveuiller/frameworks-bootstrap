@@ -1,0 +1,6 @@
+mutation write($title: String = "Placeholder") {
+    writePost(title: $title, text: "text", category: "category") {
+        id
+        title
+    }
+}
