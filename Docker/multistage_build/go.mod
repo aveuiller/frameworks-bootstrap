@@ -12,7 +12,7 @@ require (
         github.com/mattn/go-colorable v0.1.8 // indirect
         github.com/onsi/ginkgo v1.10.1 // indirect
         github.com/onsi/gomega v1.7.0 // indirect
-        github.com/opencontainers/runc v1.0.0-rc93 // indirect
+        github.com/opencontainers/runc v1.0.0-rc95 // indirect
         github.com/ory/dockertest/v3 v3.6.5 // indirect
         github.com/sirupsen/logrus v1.8.1 // indirect
         github.com/stretchr/testify v1.7.0
