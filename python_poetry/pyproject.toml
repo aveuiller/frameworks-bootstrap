@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "mypackage"
+version = "1.0.0"
+description = "TODO: Replace project description"
+authors = ["Antoine Veuiller <aveuiller@gmail.com>"]
+homepage = "https://github.com/aveuiller/frameworks-bootstrap"
+repository = "https://github.com/aveuiller/frameworks-bootstrap"
+
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.23.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+somecommand = 'mypackage.mymodule:mymethod'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
