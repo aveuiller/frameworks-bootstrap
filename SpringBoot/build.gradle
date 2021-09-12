@@ -2,6 +2,10 @@ plugins {
 	id 'org.springframework.boot' version '2.4.0'
 	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
 	id 'java'
+	id "org.sonarqube" version "3.3"
+}
+if (System.getProperty("sonar.host.url") == null || System.getProperty("sonar.host.url").isEmpty()) {
+	System.setProperty("sonar.host.url", "http://localhost:9000")
 }
 
 group = 'io.github.aveuiller.experiment'

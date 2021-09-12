@@ -1,0 +1,118 @@
+# We can't use included jobs with local executor.
+# Cf. https://gitlab.com/gitlab-org/gitlab-runner/-/issues/2797
+#include: "/CI_CD/springboot/.gitlab-ci.java.yml"
+
+variables:
+  PROJECT_DIRECTORY: SpringBoot
+  SCRIPTS_DIR: CI_CD/springboot
+  IMAGE: openjdk:11
+
+image: $IMAGE
+
+stages:
+  - build
+  - validate
+  - deploy
+
+# before_script was not merged from extension,
+# I had to use anchors instead.
+# This can be related to local build, as for the include issue.
+.abstract-job: &abstract-job
+  before_script:
+    - cd ./$PROJECT_DIRECTORY/
+
+.abstract-gradle-job: &abstract-gradle-job
+  <<: *abstract-job
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - /root/.gradle
+      - /root/.m2
+
+build:
+  <<: *abstract-gradle-job
+  # extends: .abstract-job # Prefer this if possible
+  stage: build
+  before_script:
+    - cd ./$PROJECT_DIRECTORY/
+  script:
+    - ../$SCRIPTS_DIR/build.sh
+
+dependencies:
+  <<: *abstract-gradle-job
+  stage: validate
+  script:
+    - ../$SCRIPTS_DIR/dependencies.sh
+  when: always
+
+unittest:
+  <<: *abstract-gradle-job
+  stage: validate
+  script:
+    - ../$SCRIPTS_DIR/test.sh
+  when: on_success
+
+# Integration doc: https://docs.sonarqube.org/latest/analysis/gitlab-integration/
+code-quality:
+  <<: *abstract-gradle-job
+  stage: validate
+  script:
+    - ../$SCRIPTS_DIR/sonarqube.sh
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    # Override config with pipeline variables on Gitlab.
+    SONAR_HOST_URL: http://sonarqube:9001
+    SONAR_TOKEN: "anytoken"
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  rules:
+    # Sonarqube community edition is limited to one branch
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: on_success
+  allow_failure: true
+
+code-security:
+  <<: *abstract-gradle-job
+  stage: validate
+  script:
+    - ../$SCRIPTS_DIR/security.sh
+  rules:
+    # Supposing that this is a costly pipeline,
+    # Check code security only for merge requests.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"
+      when: on_success
+
+deploy-dev:
+  <<: *abstract-gradle-job
+  stage: deploy
+  script:
+    - echo "This job deploys on DEV something from the $CI_COMMIT_BRANCH branch."
+  # Avoid using Only/Except https://docs.gitlab.com/ee/ci/yaml/#only--except
+  rules:
+    # Available variables: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: on_success
+
+deploy-staging:
+  <<: *abstract-gradle-job
+  stage: deploy
+  script:
+    - echo "This job deploys on STAGING something from the $CI_COMMIT_TAG tag."
+  # Avoid using Only/Except https://docs.gitlab.com/ee/ci/yaml/#only--except
+  rules:
+    # Execute deploy only on commits with a tag along the form 'vX.Y.Z'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+.\d+.\d+/'
+
+deploy-prod:
+  <<: *abstract-gradle-job
+  stage: deploy
+  script:
+    - echo "This job deploys on PROD something from the $CI_COMMIT_TAG tag."
+  rules:
+    # Execute prod-deploy only on commits with a tag along the form 'vX.Y.Z',
+    # with manual validation.
+    - if: '$CI_COMMIT_TAG =~ /^v\d+.\d+.\d+/'
+      when: manual
