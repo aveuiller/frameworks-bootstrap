@@ -1,18 +1,30 @@
+# /// script
+# requires-python = "<3.14"
+# dependencies = [
+#   "uvicorn",
+#   "fastapi[standard]",
+# ]
+# ///
+
 import asyncio
 import subprocess
 import sys
 import signal
 import os
 from fastapi import FastAPI
+from sigtapper import SigForwarder
 
 app = FastAPI()
 
 DEFAULT_CMD = ["python", "./subchild.py"]
-TIMEOUT_S = 10
+TIMEOUT_S = 100
+
+forwarder = SigForwarder([signal.SIGINT, signal.SIGTERM])
 
 def sync_subp(cmd, timeout):
     try:
         p = subprocess.Popen(cmd)
+        forwarder.add_process(p)
         p.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         print("Timeout expired")
@@ -25,6 +37,7 @@ def sync_subp(cmd, timeout):
 async def run_subp(cmd, timeout):
     try:
         p = subprocess.Popen(cmd)
+        forwarder.add_process(p)
         p.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         print("Timeout expired")
